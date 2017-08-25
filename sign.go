@@ -8,6 +8,9 @@ import (
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
+	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcutil"
+	"errors"
 )
 
 const (
@@ -27,6 +30,39 @@ func RawTxInSignature(tx *wire.MsgTx, idx int, subScript []byte,
 	}
 
 	return append(signature.Serialize(), byte(hashType|SigHashForkID)), nil
+}
+
+func SignTxOutput(chainParams *chaincfg.Params, tx *wire.MsgTx, idx int,
+pkScript []byte, hashType txscript.SigHashType, kdb txscript.KeyDB, sdb txscript.ScriptDB,
+previousScript []byte, amt int64) ([]byte, error) {
+
+	sigScript, class, addresses, nrequired, err := sign(chainParams, tx,
+		idx, pkScript, hashType, kdb, sdb, amt)
+	if err != nil {
+		return nil, err
+	}
+
+	if class == txscript.ScriptHashTy {
+		// TODO keep the sub addressed and pass down to merge.
+		realSigScript, _, _, _, err := sign(chainParams, tx, idx,
+			sigScript, hashType, kdb, sdb, amt)
+		if err != nil {
+			return nil, err
+		}
+
+		// Append the p2sh script as the last push in the script.
+		builder := txscript.NewScriptBuilder()
+		builder.AddOps(realSigScript)
+		builder.AddData(sigScript)
+
+		sigScript, _ = builder.Script()
+		// TODO keep a copy of the script for merging.
+	}
+
+	// Merge scripts. with any previous data, if any.
+	mergedScript := mergeScripts(chainParams, tx, idx, pkScript, class,
+		addresses, nrequired, sigScript, previousScript)
+	return mergedScript, nil
 }
 
 // calcBip143SignatureHash computes the sighash digest of a transaction's
@@ -129,4 +165,79 @@ func calcBip143SignatureHash(subScript []byte, sigHashes *txscript.TxSigHashes,
 	sigHash.Write(bHashType[:])
 
 	return chainhash.DoubleHashB(sigHash.Bytes())
+}
+
+
+func sign(chainParams *chaincfg.Params, tx *wire.MsgTx, idx int,
+subScript []byte, hashType txscript.SigHashType, kdb txscript.KeyDB, sdb txscript.ScriptDB, amt int64) ([]byte,
+txscript.ScriptClass, []btcutil.Address, int, error) {
+
+	class, addresses, nrequired, err := txscript.ExtractPkScriptAddrs(subScript,
+		chainParams)
+	if err != nil {
+		return nil, txscript.NonStandardTy, nil, 0, err
+	}
+
+	switch class {
+	case txscript.PubKeyHashTy:
+		// look up key for address
+		key, compressed, err := kdb.GetKey(addresses[0])
+		if err != nil {
+			return nil, class, nil, 0, err
+		}
+
+		script, err := SignatureScript(tx, idx, subScript, hashType,
+			key, compressed, amt)
+		if err != nil {
+			return nil, class, nil, 0, err
+		}
+
+		return script, class, addresses, nrequired, nil
+	case txscript.ScriptHashTy:
+		script, err := sdb.GetScript(addresses[0])
+		if err != nil {
+			return nil, class, nil, 0, err
+		}
+
+		return script, class, addresses, nrequired, nil
+	default:
+		return nil, class, nil, 0,
+			errors.New("can't sign unknown transactions")
+	}
+}
+
+func SignatureScript(tx *wire.MsgTx, idx int, subscript []byte, hashType txscript.SigHashType, privKey *btcec.PrivateKey, compress bool, amt int64) ([]byte, error) {
+	sig, err := RawTxInSignature(tx, idx, subscript, hashType, privKey, amt)
+	if err != nil {
+		return nil, err
+	}
+
+	pk := (*btcec.PublicKey)(&privKey.PublicKey)
+	var pkData []byte
+	if compress {
+		pkData = pk.SerializeCompressed()
+	} else {
+		pkData = pk.SerializeUncompressed()
+	}
+
+	return txscript.NewScriptBuilder().AddData(sig).AddData(pkData).Script()
+}
+
+func mergeScripts(chainParams *chaincfg.Params, tx *wire.MsgTx, idx int,
+pkScript []byte, class txscript.ScriptClass, addresses []btcutil.Address,
+nRequired int, sigScript, prevScript []byte) []byte {
+	switch class {
+
+	// It doesn't actually make sense to merge anything other than multiig
+	// and scripthash (because it could contain multisig). Everything else
+	// has either zero signature, can't be spent, or has a single signature
+	// which is either present or not. The other two cases are handled
+	// above. In the conflict case here we just assume the longest is
+	// correct (this matches behaviour of the reference implementation).
+	default:
+		if len(sigScript) > len(prevScript) {
+			return sigScript
+		}
+		return prevScript
+	}
 }
