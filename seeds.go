@@ -17,3 +17,10 @@ var TestnetDNSSeeds = []chaincfg.DNSSeed{
 	{"testnet-seed.bitprim.org", true},
 	{"testnet-seed.deadalnix.me", true},
 }
+
+func GetDNSSeed(params *chaincfg.Params) []chaincfg.DNSSeed {
+	if params.Name == chaincfg.MainNetParams.Name {
+		return MainnetDNSSeeds
+	}
+	return TestnetDNSSeeds
+}
