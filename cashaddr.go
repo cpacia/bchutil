@@ -44,8 +44,8 @@ const (
 func init() {
 	Prefixes = make(map[string]string)
 	Prefixes[chaincfg.MainNetParams.Name] = "bitcoincash"
-	Prefixes[chaincfg.TestNet3Params.Name] = "xbctest"
-	Prefixes[chaincfg.RegressionNetParams.Name] = "xbcreg"
+	Prefixes[chaincfg.TestNet3Params.Name] = "bchtest"
+	Prefixes[chaincfg.RegressionNetParams.Name] = "bchreg"
 }
 
 type data []byte
