@@ -11,6 +11,7 @@ import (
 	"github.com/btcsuite/btcutil/base58"
 	"golang.org/x/crypto/ripemd160"
 	"github.com/btcsuite/btcutil"
+	"fmt"
 )
 
 var (
@@ -218,4 +219,26 @@ func (a *BitpayAddressScriptHash) String() string {
 // keys).
 func (a *BitpayAddressScriptHash) Hash160() *[ripemd160.Size]byte {
 	return &a.hash
+}
+
+// PayToAddrScript creates a new script to pay a transaction output to a the
+// specified address.
+func BitpayPayToAddrScript(addr btcutil.Address) ([]byte, error) {
+	const nilAddrErrStr = "unable to generate payment script for nil address"
+
+	switch addr := addr.(type) {
+	case *BitpayAddressPubKeyHash:
+		if addr == nil {
+			return nil, errors.New(nilAddrErrStr)
+		}
+		return payToPubKeyHashScript(addr.ScriptAddress())
+
+	case *BitpayAddressScriptHash:
+		if addr == nil {
+			return nil, errors.New(nilAddrErrStr)
+		}
+		return payToScriptHashScript(addr.ScriptAddress())
+	}
+	return nil, fmt.Errorf("unable to generate payment script for unsupported "+
+		"address type %T", addr)
 }
