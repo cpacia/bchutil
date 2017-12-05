@@ -240,14 +240,34 @@ func CreateChecksum(prefix string, payload data) data {
  * Encode a cashaddr string.
  */
 func Encode(prefix string, payload data) string {
-	checksum := CreateChecksum(prefix, payload);
-	combined := Cat(payload, checksum);
-	ret := prefix + ":"
-
+	checksum := CreateChecksum(prefix, payload)
+	combined := Cat(payload, checksum)
+	var arr []uint8
 	for _, c := range combined {
+		arr = append(arr, uint8(c))
+	}
+	var newArr []uint8
+	ret := prefix + ":"
+	for a := 0; a < len(arr); a += 5 {
+		arrTemp := arr[a : a+5]
+		// use clever tricks to remove the need of encoding/base32
+		// 1 1 1 1 1 2 2 2
+		// 2 2 3 3 3 3 3 4
+		// 4 4 4 4 5 5 5 5
+		// 5 6 6 6 6 6 7 7
+		// 7 7 7 8 8 8 8 8
+		newArr = append(newArr, arrTemp[0]>>3)
+		newArr = append(newArr, (arrTemp[0]%8)<<2+arrTemp[1]>>6)
+		newArr = append(newArr, (arrTemp[1]%64)>>1)
+		newArr = append(newArr, (arrTemp[1]%2)<<4+arrTemp[2]>>4)
+		newArr = append(newArr, (arrTemp[2]%16)<<1+arrTemp[3]>>7)
+		newArr = append(newArr, (arrTemp[3]%128)>>2)
+		newArr = append(newArr, (arrTemp[3]%4)<<3+arrTemp[4]>>5)
+		newArr = append(newArr, arrTemp[4]%32)
+	}
+	for _, c := range newArr {
 		ret += string(CHARSET[c])
 	}
-
 	return ret
 }
 
