@@ -16,7 +16,7 @@ var valid []string = []string {
 
 func TestValid(t *testing.T) {
 	for _, s := range valid {
-		_, _, err := Decode(s)
+		_, _, err := DecodeCashAddr(s)
 		if err != nil {
 			t.Error(err)
 		}
@@ -38,16 +38,16 @@ var Invalid []string = []string {
 
 func TestInvalid(t *testing.T) {
 	for _, s := range Invalid {
-		_, _, err := Decode(s)
+		_, _, err := DecodeCashAddr(s)
 		if err == nil {
 			t.Error("Failed to error on invalid string")
 		}
 	}
 }
 
-func TestDecodeAddress(t *testing.T) {
+func TestDecodeCashAddress(t *testing.T) {
 	// Mainnet
-	addr, err := DecodeAddress("bitcoincash:qpzry9x8gf2tvdw0s3jn5grmq650p", &chaincfg.MainNetParams)
+	addr, err := DecodeCashAddress("bitcoincash:qpzry9x8gf2tvdw0s3jn5grmq650p", &chaincfg.MainNetParams)
 	if err != nil {
 		t.Error(err)
 	}
@@ -55,7 +55,7 @@ func TestDecodeAddress(t *testing.T) {
 		t.Error("Address decoding error")
 	}
 	// Testnet
-	addr, err = DecodeAddress("bchtest:qpzry9x8gf2tvdw0s3jn5839nranq", &chaincfg.TestNet3Params)
+	addr, err = DecodeCashAddress("bchtest:qpzry9x8gf2tvdw0s3jn5839nranq", &chaincfg.TestNet3Params)
 	if err != nil {
 		t.Error(err)
 	}
@@ -63,7 +63,7 @@ func TestDecodeAddress(t *testing.T) {
 		t.Error("Address decoding error")
 	}
 	// Regtest
-	addr, err = DecodeAddress("bchreg:qpzry9x8gf2tvdw0s3jn5tgutzngm", &chaincfg.RegressionNetParams)
+	addr, err = DecodeCashAddress("bchreg:qpzry9x8gf2tvdw0s3jn5tgutzngm", &chaincfg.RegressionNetParams)
 	if err != nil {
 		t.Error(err)
 	}
@@ -72,15 +72,15 @@ func TestDecodeAddress(t *testing.T) {
 	}
 }
 
-var dataElement = []byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20}
-
+var dataElement = []byte{203, 72, 18, 50, 41, 156, 213, 116, 49, 81, 172, 75, 45, 99, 174, 25, 142, 123, 176, 169}
+// Second address of https://github.com/Bitcoin-UAHF/spec/blob/master/cashaddr.md#examples-of-address-translation
 func TestCashAddressPubKeyHash_EncodeAddress(t *testing.T) {
 	// Mainnet
 	addr, err := NewCashAddressPubKeyHash(dataElement, &chaincfg.MainNetParams)
 	if err != nil {
 		t.Error(err)
 	}
-	if addr.String() != "bitcoincash:qpzry9x8gf2tvdw0s3jn5grmq650p" {
+	if addr.String() != "bitcoincash:qr95sy3j9xwd2ap32xkykttr4cvcu7as4y0qverfuy" {
 		t.Error("Address decoding error")
 	}
 	// Testnet
@@ -101,17 +101,19 @@ func TestCashAddressPubKeyHash_EncodeAddress(t *testing.T) {
 	}
 }
 
+var dataElement2 = []byte{118, 160, 64, 83, 189, 160, 168, 139, 218, 81, 119, 184, 106, 21, 195, 178, 159, 85, 152, 115}
+// 4th address of https://github.com/Bitcoin-UAHF/spec/blob/master/cashaddr.md#examples-of-address-translation
 func TestCashAddressScriptHash_EncodeAddress(t *testing.T) {
 	// Mainnet
-	addr, err := NewCashAddressScriptHashFromHash(dataElement, &chaincfg.MainNetParams)
+	addr, err := NewCashAddressScriptHashFromHash(dataElement2, &chaincfg.MainNetParams)
 	if err != nil {
 		t.Error(err)
 	}
-	if addr.String() != "bitcoincash:gpzry9x8gf2tvdw0s3jn5em94f38k" {
+	if addr.String() != "bitcoincash:ppm2qsznhks23z7629mms6s4cwef74vcwvn0h829pq" {
 		t.Error("Address decoding error")
 	}
 	// Testnet
-	addr, err = NewCashAddressScriptHashFromHash(dataElement, &chaincfg.TestNet3Params)
+	addr, err = NewCashAddressScriptHashFromHash(dataElement2, &chaincfg.TestNet3Params)
 	if err != nil {
 		t.Error(err)
 	}
@@ -119,7 +121,7 @@ func TestCashAddressScriptHash_EncodeAddress(t *testing.T) {
 		t.Error("Address decoding error")
 	}
 	// Regtest
-	addr, err = NewCashAddressScriptHashFromHash(dataElement, &chaincfg.RegressionNetParams)
+	addr, err = NewCashAddressScriptHashFromHash(dataElement2, &chaincfg.RegressionNetParams)
 	if err != nil {
 		t.Error(err)
 	}
