@@ -254,7 +254,7 @@ func Encode(prefix string, payload data) string {
 /**
  * Decode a cashaddr string.
  */
-func DecodeCashAddr(str string) (string, data, error) {
+func DecodeCashAddress(str string) (string, data, error) {
 	// Go over the string and do some sanity checks.
 	lower, upper := false, false
 	prefixSize := 0
@@ -332,7 +332,7 @@ func DecodeCashAddr(str string) (string, data, error) {
 }
 
 func CheckEncodeCashAddress(input []byte, prefix string, t AddressType) string {
-	k, err := packAddrData(t, input)
+	k, err := packAddressData(t, input)
 	if err != nil {
 		fmt.Println("%v", err)
 		return ""
@@ -343,7 +343,7 @@ func CheckEncodeCashAddress(input []byte, prefix string, t AddressType) string {
 
 // CheckDecode decodes a string that was encoded with CheckEncode and verifies the checksum.
 func CheckDecodeCashAddress(input string) (result []byte, prefix string, t AddressType, err error) {
-	prefix, data, err := DecodeCashAddr(input)
+	prefix, data, err := DecodeCashAddress(input)
 	if err != nil {
 		return data, prefix, P2PKH, err
 	}
@@ -353,6 +353,13 @@ func CheckDecodeCashAddress(input string) (result []byte, prefix string, t Addre
 	case 0x08:
 		t = P2SH
 	}
+	data, err = convertBits(data, 5, 8, false)
+	if err != nil {
+		return data, prefix, P2PKH, err
+	}
+	if len(data) != 21 {
+		return data, prefix, P2PKH, errors.New("Incorrect data length")
+	}
 	return data[1:21], prefix, t, nil
 }
 
@@ -360,7 +367,7 @@ func CheckDecodeCashAddress(input string) (result []byte, prefix string, t Addre
 // and prefix which encodes the bitcoin cash network and address type.  It is used
 // in both pay-to-pubkey-hash (P2PKH) and pay-to-script-hash (P2SH) address
 // encoding.
-func encodeAddress(hash160 []byte, prefix string, t AddressType) string {
+func encodeCashAddress(hash160 []byte, prefix string, t AddressType) string {
 	return CheckEncodeCashAddress(hash160[:ripemd160.Size], prefix, t)
 }
 
@@ -368,7 +375,7 @@ func encodeAddress(hash160 []byte, prefix string, t AddressType) string {
 // the Address if addr is a valid encoding for a known address type.
 //
 // The bitcoin cash network the address is associated with is extracted if possible.
-func DecodeCashAddress(addr string, defaultNet *chaincfg.Params) (btcutil.Address, error) {
+func DecodeAddress(addr string, defaultNet *chaincfg.Params) (btcutil.Address, error) {
 	_, ok := Prefixes[defaultNet.Name]
 	if !ok {
 		return nil, errors.New("unknown network parameters")
@@ -435,7 +442,7 @@ func newCashAddressPubKeyHash(pkHash []byte, net *chaincfg.Params) (*CashAddress
 // EncodeAddress returns the string encoding of a pay-to-pubkey-hash
 // address.  Part of the Address interface.
 func (a *CashAddressPubKeyHash) EncodeAddress() string {
-	return encodeAddress(a.hash[:], a.prefix, P2PKH)
+	return encodeCashAddress(a.hash[:], a.prefix, P2PKH)
 }
 
 // ScriptAddress returns the bytes to be included in a txout script to pay
@@ -511,7 +518,7 @@ func newCashAddressScriptHashFromHash(scriptHash []byte, net *chaincfg.Params) (
 // EncodeAddress returns the string encoding of a pay-to-script-hash
 // address.  Part of the Address interface.
 func (a *CashAddressScriptHash) EncodeAddress() string {
-	return encodeAddress(a.hash[:], a.prefix, P2SH)
+	return encodeCashAddress(a.hash[:], a.prefix, P2SH)
 }
 
 // ScriptAddress returns the bytes to be included in a txout script to pay
@@ -604,7 +611,7 @@ func ExtractPkScriptAddrs(pkScript []byte, chainParams *chaincfg.Params) (btcuti
 // MIT License
 
 
-func convertBits(data data, fromBits uint, tobits uint, pad bool) ([]uint, error) {
+func convertBits(data data, fromBits uint, tobits uint, pad bool) (data, error) {
 	// General power-of-2 base conversion.
 	var uintArr []uint
 	for _,i := range data {
@@ -628,12 +635,16 @@ func convertBits(data data, fromBits uint, tobits uint, pad bool) ([]uint, error
 			ret = append(ret, (acc<<(tobits-bits))&maxv)
 		}
 	} else if bits >= fromBits || ((acc<<(tobits-bits))&maxv) != 0 {
-		return ret, errors.New("encoding padding error")
+		return []byte{}, errors.New("encoding padding error")
 	}
-	return ret, nil
+	var dataArr []byte
+	for _, i := range ret {
+		dataArr = append(dataArr, byte(i))
+	}
+	return dataArr, nil
 }
 
-func packAddrData(addrType AddressType, addrHash data) (data, error) {
+func packAddressData(addrType AddressType, addrHash data) (data, error) {
 	// Pack addr data with version byte.
 	if addrType != P2PKH && addrType != P2SH {
 		return data{}, errors.New("invalid addrtype")
@@ -656,18 +667,5 @@ func packAddrData(addrType AddressType, addrHash data) (data, error) {
 	if err != nil {
 		return []byte{}, err
 	}
-	var dataArr []byte
-	for _, i := range packedData {
-		dataArr = append(dataArr, byte(i))
-	}
-	return dataArr, nil
+	return packedData, nil
 }
-
-/*func CashEncode(prefix string, hash data, t AddressType) string {
-	k, err := packAddrData(t, hash)
-	if err != nil {
-		fmt.Println("%v", err)
-		return ""
-	}
-	return Encode("bitcoincash", k)
-}*/

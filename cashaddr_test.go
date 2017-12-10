@@ -16,7 +16,7 @@ var valid []string = []string {
 
 func TestValid(t *testing.T) {
 	for _, s := range valid {
-		_, _, err := DecodeCashAddr(s)
+		_, _, err := DecodeCashAddress(s)
 		if err != nil {
 			t.Error(err)
 		}
@@ -38,7 +38,7 @@ var Invalid []string = []string {
 
 func TestInvalid(t *testing.T) {
 	for _, s := range Invalid {
-		_, _, err := DecodeCashAddr(s)
+		_, _, err := DecodeCashAddress(s)
 		if err == nil {
 			t.Error("Failed to error on invalid string")
 		}
@@ -47,27 +47,27 @@ func TestInvalid(t *testing.T) {
 
 func TestDecodeCashAddress(t *testing.T) {
 	// Mainnet
-	addr, err := DecodeCashAddress("bitcoincash:qpzry9x8gf2tvdw0s3jn5grmq650p", &chaincfg.MainNetParams)
+	addr, err := DecodeAddress("bitcoincash:qr95sy3j9xwd2ap32xkykttr4cvcu7as4y0qverfuy", &chaincfg.MainNetParams)
 	if err != nil {
 		t.Error(err)
 	}
-	if addr.String() != "bitcoincash:qpzry9x8gf2tvdw0s3jn5grmq650p" {
+	if addr.String() != "bitcoincash:qr95sy3j9xwd2ap32xkykttr4cvcu7as4y0qverfuy" {
 		t.Error("Address decoding error")
 	}
 	// Testnet
-	addr, err = DecodeCashAddress("bchtest:qpzry9x8gf2tvdw0s3jn5839nranq", &chaincfg.TestNet3Params)
+	addr, err = DecodeAddress("bchtest:qr95sy3j9xwd2ap32xkykttr4cvcu7as4ytjg7p7mc", &chaincfg.TestNet3Params)
 	if err != nil {
 		t.Error(err)
 	}
-	if addr.String() != "bchtest:qpzry9x8gf2tvdw0s3jn5839nranq" {
+	if addr.String() != "bchtest:qr95sy3j9xwd2ap32xkykttr4cvcu7as4ytjg7p7mc" {
 		t.Error("Address decoding error")
 	}
 	// Regtest
-	addr, err = DecodeCashAddress("bchreg:qpzry9x8gf2tvdw0s3jn5tgutzngm", &chaincfg.RegressionNetParams)
+	addr, err = DecodeAddress("bchreg:qr95sy3j9xwd2ap32xkykttr4cvcu7as4y3w7lzdc7", &chaincfg.RegressionNetParams)
 	if err != nil {
 		t.Error(err)
 	}
-	if addr.String() != "bchreg:qpzry9x8gf2tvdw0s3jn5tgutzngm" {
+	if addr.String() != "bchreg:qr95sy3j9xwd2ap32xkykttr4cvcu7as4y3w7lzdc7" {
 		t.Error("Address decoding error")
 	}
 }
@@ -88,7 +88,7 @@ func TestCashAddressPubKeyHash_EncodeAddress(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if addr.String() != "bchtest:qpzry9x8gf2tvdw0s3jn5wzx48p70" {
+	if addr.String() != "bchtest:qr95sy3j9xwd2ap32xkykttr4cvcu7as4ytjg7p7mc" {
 		t.Error("Address decoding error")
 	}
 	// Regtest
@@ -96,7 +96,7 @@ func TestCashAddressPubKeyHash_EncodeAddress(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if addr.String() != "bchreg:qpzry9x8gf2tvdw0s3jn5yk7zka9p" {
+	if addr.String() != "bchreg:qr95sy3j9xwd2ap32xkykttr4cvcu7as4y3w7lzdc7" {
 		t.Error("Address decoding error")
 	}
 }
@@ -117,7 +117,7 @@ func TestCashAddressScriptHash_EncodeAddress(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if addr.String() != "bchtest:gpzry9x8gf2tvdw0s3jn5l6cq5ykc" {
+	if addr.String() != "bchtest:ppm2qsznhks23z7629mms6s4cwef74vcwvhanqgjxu" {
 		t.Error("Address decoding error")
 	}
 	// Regtest
@@ -125,7 +125,7 @@ func TestCashAddressScriptHash_EncodeAddress(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if addr.String() != "bchreg:gpzry9x8gf2tvdw0s3jn54wqh9cdk" {
+	if addr.String() != "bchreg:ppm2qsznhks23z7629mms6s4cwef74vcwvdp9ptp96" {
 		t.Error("Address decoding error")
 	}
 }
