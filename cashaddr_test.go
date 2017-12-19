@@ -3,7 +3,20 @@ package bchutil
 import (
 	"testing"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcutil"
 )
+
+var TestVectorsP2PKH = [][]string {
+	{"1BpEi6DfDAUFd7GtittLSdBeYJvcoaVggu", "bitcoincash:qpm2qsznhks23z7629mms6s4cwef74vcwvy22gdx6a"},
+	{"1KXrWXciRDZUpQwQmuM1DbwsKDLYAYsVLR", "bitcoincash:qr95sy3j9xwd2ap32xkykttr4cvcu7as4y0qverfuy"},
+	{"16w1D5WRVKJuZUsSRzdLp9w3YGcgoxDXb", "bitcoincash:qqq3728yw0y47sqn6l2na30mcw6zm78dzqre909m2r"},
+}
+
+var TestVectorsP2SH = [][]string {
+	{"3CWFddi6m4ndiGyKqzYvsFYagqDLPVMTzC", "bitcoincash:ppm2qsznhks23z7629mms6s4cwef74vcwvn0h829pq"},
+	{"3LDsS579y7sruadqu11beEJoTjdFiFCdX4", "bitcoincash:pr95sy3j9xwd2ap32xkykttr4cvcu7as4yc93ky28e"},
+	{"31nwvkZwyPdgzjBJZXfDmSWsC4ZLKpYyUw", "bitcoincash:pqq3728yw0y47sqn6l2na30mcw6zm78dzq5ucqzc37"},
+}
 
 var valid []string = []string {
 	"prefix:x64nx6hz",
@@ -127,5 +140,36 @@ func TestCashAddressScriptHash_EncodeAddress(t *testing.T) {
 	}
 	if addr.String() != "bchreg:ppm2qsznhks23z7629mms6s4cwef74vcwvdp9ptp96" {
 		t.Error("Address decoding error")
+	}
+}
+
+func TestTestVectors(t *testing.T) {
+	for _, v := range TestVectorsP2PKH {
+		addr, err := btcutil.DecodeAddress(v[0], &chaincfg.MainNetParams)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		addr2, err := NewCashAddressPubKeyHash(addr.ScriptAddress(), &chaincfg.MainNetParams)
+		if err != nil {
+			t.Error(err)
+		}
+		if addr2.String() != v[1] {
+			t.Error("Failed to derive correct address")
+		}
+	}
+	for _, v := range TestVectorsP2SH {
+		addr, err := btcutil.DecodeAddress(v[0], &chaincfg.MainNetParams)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		addr2, err := NewCashAddressScriptHashFromHash(addr.ScriptAddress(), &chaincfg.MainNetParams)
+		if err != nil {
+			t.Error(err)
+		}
+		if addr2.String() != v[1] {
+			t.Error("Failed to derive correct address")
+		}
 	}
 }
