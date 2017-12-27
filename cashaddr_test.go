@@ -67,6 +67,13 @@ func TestDecodeCashAddress(t *testing.T) {
 	if addr.String() != "bitcoincash:qr95sy3j9xwd2ap32xkykttr4cvcu7as4y0qverfuy" {
 		t.Error("Address decoding error")
 	}
+	addr1, err := DecodeAddress("bitcoincash:ppm2qsznhks23z7629mms6s4cwef74vcwvn0h829pq", &chaincfg.MainNetParams)
+	if err != nil {
+		t.Error(err)
+	}
+	if addr1.String() != "bitcoincash:ppm2qsznhks23z7629mms6s4cwef74vcwvn0h829pq" {
+		t.Error("Address decoding error")
+	}
 	// Testnet
 	addr, err = DecodeAddress("bchtest:qr95sy3j9xwd2ap32xkykttr4cvcu7as4ytjg7p7mc", &chaincfg.TestNet3Params)
 	if err != nil {
