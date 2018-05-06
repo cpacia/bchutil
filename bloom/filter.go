@@ -11,8 +11,8 @@ import (
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/txscript"
-	"github.com/cpacia/bchutil"
-	"github.com/cpacia/btcd/wire"
+	"github.com/jchavannes/bchutil"
+	"github.com/jchavannes/btcd/wire"
 )
 
 // ln2Squared is simply the square of the natural log of 2.
