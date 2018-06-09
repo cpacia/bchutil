@@ -20,6 +20,10 @@ var (
 	// registered (via chaincfg.Register) network.
 	ErrUnknownAddressType = errors.New("unknown address type")
 
+	// ErrChecksumErrorNotSolved describes an error where address errors
+	// can't be solved (e.g. more than two characters are wrong).
+	ErrChecksumErrorNotFixed = errors.New("can't correct address errors")
+
 	// ErrAddressCollision describes an error where an address can not
 	// be uniquely determined as either a pay-to-pubkey-hash or
 	// pay-to-script-hash address since the leading identifier is used for
@@ -254,7 +258,7 @@ func Encode(prefix string, payload data) string {
 /**
  * Decode a cashaddr string.
  */
-func DecodeCashAddress(str string) (string, data, error) {
+func DecodeCashAddress(str string, correctErrors bool) (string, string, data, error) {
 	// Go over the string and do some sanity checks.
 	lower, upper := false, false
 	prefixSize := 0
@@ -273,7 +277,7 @@ func DecodeCashAddress(str string) (string, data, error) {
 		if (c >= '0' && c <= '9') {
 			// We cannot have numbers in the prefix.
 			if (prefixSize == 0) {
-				return "", data{}, errors.New("Addresses cannot have numbers in the prefix")
+				return "", "", data{}, errors.New("Addresses cannot have numbers in the prefix")
 			}
 
 			continue
@@ -283,7 +287,7 @@ func DecodeCashAddress(str string) (string, data, error) {
 			// The separator must not be the first character, and there must not
 			// be 2 separators.
 			if (i == 0 || prefixSize != 0) {
-				return "", data{}, errors.New("The separator must not be the first character")
+				return "", "", data{}, errors.New("The separator must not be the first character")
 			}
 
 			prefixSize = i
@@ -291,17 +295,17 @@ func DecodeCashAddress(str string) (string, data, error) {
 		}
 
 		// We have an unexpected character.
-		return "", data{}, errors.New("Unexpected character")
+		return "", "", data{}, errors.New("Unexpected character")
 	}
 
 	// We must have a prefix and a data part and we can't have both uppercase
 	// and lowercase.
 	if (prefixSize == 0) {
-		return "", data{}, errors.New("Address must have a prefix")
+		return "", "", data{}, errors.New("Address must have a prefix")
 	}
 
 	if (upper && lower) {
-		return "", data{}, errors.New("Addresses cannot use both upper and lower case characters")
+		return "", "", data{}, errors.New("Addresses cannot use both upper and lower case characters")
 	}
 
 	// Get the prefix.
@@ -317,7 +321,7 @@ func DecodeCashAddress(str string) (string, data, error) {
 		c := byte(str[i + prefixSize + 1])
 		// We have an invalid char in there.
 		if (c > 127 || CHARSET_REV[c] == -1) {
-			return "", data{}, errors.New("Invalid character")
+			return "", "", data{}, errors.New("Invalid character")
 		}
 
 		values[i] = byte(CHARSET_REV[c])
@@ -325,10 +329,47 @@ func DecodeCashAddress(str string) (string, data, error) {
 
 	// Verify the checksum.
 	if (!VerifyChecksum(prefix, values)) {
-		return "", data{}, ErrChecksumMismatch
+		if correctErrors {
+			data := Cat(ExpandPrefix(prefix), values)
+			checksum := PolyMod(data)
+			syndromes := make(map[uint64]uint64)
+			for p := 0; p < len(data); p++ {
+				for e := byte(1); e < 32; e++ {
+					// Add the error
+					data[p] ^= e
+					c := PolyMod(data)
+					if c == 0 {
+						correctedAddress := rebuildAddress(data)
+						_, prefix, data, _ := DecodeCashAddress(correctedAddress, true)
+						return correctedAddress, prefix, data, nil
+					}
+					syndromes[c ^ checksum] = uint64(p * 32) + uint64(e)
+					data[p] ^= e
+				}
+			}
+			for s0, pe := range syndromes {
+				// value = s1
+				if value, keyExists := syndromes[s0 ^ checksum]; keyExists {
+					data[pe / 32] ^= byte(pe % 32)
+					data[value / 32] ^= byte(value % 32)
+					correctedAddress := rebuildAddress(data)
+					_, prefix, data, _ := DecodeCashAddress(correctedAddress, true)
+					return correctedAddress, prefix, data, nil
+				}
+			}
+			return "", "", []byte{}, ErrChecksumErrorNotFixed
+		} else {
+			return "", "", data{}, ErrChecksumMismatch
+		}
 	}
 
-	return prefix, values[:len(values)-8], nil
+	return str, prefix, values[:len(values)-8], nil
+}
+
+// FixCashAddressErrors fixes errors of an address and returns it.
+func FixCashAddressErrors(address string) (string, error) {
+	correctedAddress, _, _, err := DecodeCashAddress(address, true)
+	return correctedAddress, err
 }
 
 func CheckEncodeCashAddress(input []byte, prefix string, t AddressType) string {
@@ -342,17 +383,17 @@ func CheckEncodeCashAddress(input []byte, prefix string, t AddressType) string {
 
 
 // CheckDecode decodes a string that was encoded with CheckEncode and verifies the checksum.
-func CheckDecodeCashAddress(input string) (result []byte, prefix string, t AddressType, err error) {
-	prefix, data, err := DecodeCashAddress(input)
+func CheckDecodeCashAddress(input string, correctErrors bool) (correctedAddress string, result []byte, prefix string, t AddressType, err error) {
+	correctedAddress, prefix, data, err := DecodeCashAddress(input, correctErrors)
 	if err != nil {
-		return data, prefix, P2PKH, err
+		return correctedAddress, data, prefix, P2PKH, err
 	}
 	data, err = convertBits(data, 5, 8, false)
 	if err != nil {
-		return data, prefix, P2PKH, err
+		return correctedAddress, data, prefix, P2PKH, err
 	}
 	if len(data) != 21 {
-		return data, prefix, P2PKH, errors.New("Incorrect data length")
+		return correctedAddress, data, prefix, P2PKH, errors.New("Incorrect data length")
 	}
 	switch(data[0]){
 	case 0x00:
@@ -360,7 +401,7 @@ func CheckDecodeCashAddress(input string) (result []byte, prefix string, t Addre
 	case 0x08:
 		t = P2SH
 	}
-	return data[1:21], prefix, t, nil
+	return correctedAddress, data[1:21], prefix, t, nil
 }
 
 // encodeAddress returns a human-readable payment address given a ripemd160 hash
@@ -375,7 +416,7 @@ func encodeCashAddress(hash160 []byte, prefix string, t AddressType) string {
 // the Address if addr is a valid encoding for a known address type.
 //
 // The bitcoin cash network the address is associated with is extracted if possible.
-func DecodeAddress(addr string, defaultNet *chaincfg.Params) (btcutil.Address, error) {
+func DecodeAddress(addr string, defaultNet *chaincfg.Params, correctErrors bool) (btcutil.Address, error) {
 	pre, ok := Prefixes[defaultNet.Name]
 	if !ok {
 		return nil, errors.New("unknown network parameters")
@@ -387,10 +428,13 @@ func DecodeAddress(addr string, defaultNet *chaincfg.Params) (btcutil.Address, e
 	}
 
 	// Switch on decoded length to determine the type.
-	decoded, _, typ, err := CheckDecodeCashAddress(addr)
+	_, decoded, _, typ, err := CheckDecodeCashAddress(addr, correctErrors)
 	if err != nil {
 		if err == ErrChecksumMismatch {
 			return nil, ErrChecksumMismatch
+		}
+		if err == ErrChecksumErrorNotFixed {
+			return nil, ErrChecksumErrorNotFixed
 		}
 		return nil, errors.New("decoded address is of unknown format")
 	}
@@ -576,6 +620,23 @@ func cashPayToAddrScript(addr btcutil.Address) ([]byte, error) {
 	}
 	return nil, fmt.Errorf("unable to generate payment script for unsupported "+
 		"address type %T", addr)
+}
+
+// The internal function to recreate malformed addresses.
+func rebuildAddress(addressData []byte) string {
+	i := 0
+	base := 'a' & 0xe0
+	// Fast append to string
+	bs := make([]byte, len(addressData))
+	println(len(addressData))
+	for (addressData[i] != 0) {
+		i += copy(bs[i:], string(base + rune(addressData[i])))
+	}
+	i += copy(bs[i:], ":")
+	for _, c := range addressData[i:] {
+		i += copy(bs[i:], string(CHARSET[c]))
+	}
+	return string(bs)
 }
 
 // payToPubKeyHashScript creates a new script to pay a transaction
