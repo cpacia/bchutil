@@ -1,29 +1,28 @@
 package bchutil
 
 import (
-	"testing"
-	"github.com/btcsuite/btcd/wire"
 	"bytes"
-	"github.com/btcsuite/btcd/txscript"
 	"encoding/hex"
-	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/btcec"
+	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/txscript"
+	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
+	"testing"
 )
 
 type SigHashVector struct {
-	RawTx string
+	RawTx  string
 	Inputs []Input
 }
 
 type Input struct {
-	Pubkey string
+	Pubkey    string
 	Signature string
-	Value int64
+	Value     int64
 }
 
-
-var SigHashTestVectors = []SigHashVector {
+var SigHashTestVectors = []SigHashVector{
 	{
 		RawTx: "0100000001d71dd1e5eab582c7b6ec624a70c9b3b515e11ede8bc86a7b11cac4e3835f4935010000006b483045022100c377c67448794dd1a49b7406b4178f4862f86d91061e402e0f1959e87456844002200c5055448cf4c270c653667006c88134b0c22b8a53182f6c5078f18fa820af3d412102bc4f7f11f7b45f4be411d4891bde9d0aedd59a5873c21a844b8dbb01c64dfb35ffffffff0200e1f505000000001976a914fb6553eda6df1a1fbf14d4fe43687b3b12aec92088ac02e6d213010000001976a9142035366682baeda80a415d80a8100f17890853d388ac00000000",
 		Inputs: []Input{
