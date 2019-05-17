@@ -381,6 +381,10 @@ func DecodeAddress(addr string, defaultNet *chaincfg.Params) (btcutil.Address, e
 		return nil, errors.New("unknown network parameters")
 	}
 
+	if len(addr) < len(pre)+1 {
+		return nil, errors.New("address too small")
+	}
+
 	// Add prefix if it does not exist
 	if addr[:len(pre)+1] != pre + ":" {
 		addr = pre + ":" + addr
