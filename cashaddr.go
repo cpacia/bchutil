@@ -7,6 +7,7 @@ import (
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcutil"
 	"golang.org/x/crypto/ripemd160"
+	"strings"
 )
 
 var (
@@ -386,7 +387,7 @@ func DecodeAddress(addr string, defaultNet *chaincfg.Params) (btcutil.Address, e
 	}
 
 	// Add prefix if it does not exist
-	if addr[:len(pre)+1] != pre + ":" {
+	if ! strings.Contains(addr, ":") {
 		addr = pre + ":" + addr
 	}
 
