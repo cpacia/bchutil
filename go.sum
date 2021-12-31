@@ -18,8 +18,6 @@ github.com/google/go-cmp v0.5.5/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/
 github.com/hpcloud/tail v1.0.0/go.mod h1:ab1qPbhIpdTxEkNHXyeSf5vhxWSCs/tWer42PpOxQnU=
 github.com/jchavannes/btclog v1.1.0 h1:UWXSCm2v+6Dr3vN5WtfWfnuQe6YQAbgghOAh2xG2WBM=
 github.com/jchavannes/btclog v1.1.0/go.mod h1:jgXlyu/UfDM+TCp+ui1o0M0w4Fvh4z4QOe0VyZDeasU=
-github.com/jchavannes/btcrpcclient v1.1.0 h1:1mVNAV9009XwFLjh1tVUGRGIXWF/vwt2c+4P/HDCIAM=
-github.com/jchavannes/btcrpcclient v1.1.0/go.mod h1:kfIvoDTnXYWMeIsPpR1EU0aCcG4IbLsHtG66r7y/nf0=
 github.com/jessevdk/go-flags v1.4.0 h1:4IU2WS7AumrZ/40jfhf4QVDMsQwqA7VEHozFRrGARJA=
 github.com/jessevdk/go-flags v1.4.0/go.mod h1:4FA24M0QyGHXBuZZK/XkWh8h0e1EYbRYJSGM75WSRxI=
 github.com/jrick/logrotate v1.0.0 h1:lQ1bL/n9mBNeIXoTUoYRlK4dHuNJVofX9oWqBtPnSzI=
