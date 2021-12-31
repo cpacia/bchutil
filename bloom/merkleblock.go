@@ -5,9 +5,9 @@
 package bloom
 
 import (
-	"github.com/btcsuite/btcd/blockchain"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/jchavannes/bchutil"
+	"github.com/jchavannes/btcd/blockchain"
+	"github.com/jchavannes/btcd/chaincfg/chainhash"
 	"github.com/jchavannes/btcd/wire"
 )
 

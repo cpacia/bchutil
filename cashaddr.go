@@ -3,9 +3,9 @@ package bchutil
 import (
 	"errors"
 	"fmt"
-	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/btcsuite/btcd/txscript"
-	"github.com/btcsuite/btcutil"
+	"github.com/jchavannes/btcd/chaincfg"
+	"github.com/jchavannes/btcd/txscript"
+	"github.com/jchavannes/btcutil"
 	"golang.org/x/crypto/ripemd160"
 	"strings"
 )
@@ -54,12 +54,12 @@ type data []byte
 /**
  * The cashaddr character set for encoding.
  */
-const CHARSET string = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
+const CHARSET string = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"
 
 /**
  * The cashaddr character set for decoding.
  */
-var  CHARSET_REV = [128]int8 {
+var CHARSET_REV = [128]int8{
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 15, -1, 10, 17, 21, 20, 26, 30, 7,
@@ -144,37 +144,37 @@ func PolyMod(v data) uint64 {
 		c0 := byte(c >> 35)
 
 		// Then compute c1*x^5 + c2*x^4 + c3*x^3 + c4*x^2 + c5*x + d:
-		c = ((c & 0x07ffffffff) << 5) ^ uint64(d);
+		c = ((c & 0x07ffffffff) << 5) ^ uint64(d)
 
 		// Finally, for each set bit n in c0, conditionally add {2^n}k(x):
-		if (c0 & 0x01 > 0) {
+		if c0&0x01 > 0 {
 			// k(x) = {19}*x^7 + {3}*x^6 + {25}*x^5 + {11}*x^4 + {25}*x^3 +
 			//        {3}*x^2 + {19}*x + {1}
-			c ^= 0x98f2bc8e61;
+			c ^= 0x98f2bc8e61
 		}
 
-		if (c0 & 0x02 > 0) {
+		if c0&0x02 > 0 {
 			// {2}k(x) = {15}*x^7 + {6}*x^6 + {27}*x^5 + {22}*x^4 + {27}*x^3 +
 			//           {6}*x^2 + {15}*x + {2}
-			c ^= 0x79b76d99e2;
+			c ^= 0x79b76d99e2
 		}
 
-		if (c0 & 0x04 > 0) {
+		if c0&0x04 > 0 {
 			// {4}k(x) = {30}*x^7 + {12}*x^6 + {31}*x^5 + {5}*x^4 + {31}*x^3 +
 			//           {12}*x^2 + {30}*x + {4}
-			c ^= 0xf33e5fb3c4;
+			c ^= 0xf33e5fb3c4
 		}
 
-		if (c0 & 0x08 > 0) {
+		if c0&0x08 > 0 {
 			// {8}k(x) = {21}*x^7 + {24}*x^6 + {23}*x^5 + {10}*x^4 + {23}*x^3 +
 			//           {24}*x^2 + {21}*x + {8}
-			c ^= 0xae2eabe2a8;
+			c ^= 0xae2eabe2a8
 		}
 
-		if (c0 & 0x10 > 0) {
+		if c0&0x10 > 0 {
 			// {16}k(x) = {3}*x^7 + {25}*x^6 + {7}*x^5 + {20}*x^4 + {7}*x^3 +
 			//            {25}*x^2 + {3}*x + {16}
-			c ^= 0x1e4f43e470;
+			c ^= 0x1e4f43e470
 		}
 	}
 
@@ -185,7 +185,7 @@ func PolyMod(v data) uint64 {
 	 * new valid list. For that reason, cashaddr requires the resulting checksum
 	 * to be 1 instead.
 	 */
-	return c ^ 1;
+	return c ^ 1
 }
 
 /**
@@ -195,54 +195,52 @@ func PolyMod(v data) uint64 {
  */
 func LowerCase(c byte) byte {
 	// ASCII black magic.
-	return c | 0x20;
+	return c | 0x20
 }
 
 /**
  * Expand the address prefix for the checksum computation.
  */
 func ExpandPrefix(prefix string) data {
-	ret := make(data, len(prefix) + 1)
+	ret := make(data, len(prefix)+1)
 	for i := 0; i < len(prefix); i++ {
-		ret[i] = byte(prefix[i]) & 0x1f;
+		ret[i] = byte(prefix[i]) & 0x1f
 	}
 
-	ret[len(prefix)] = 0;
-	return ret;
+	ret[len(prefix)] = 0
+	return ret
 }
 
 /**
  * Verify a checksum.
  */
 func VerifyChecksum(prefix string, payload data) bool {
-	return PolyMod(Cat(ExpandPrefix(prefix), payload)) == 0;
+	return PolyMod(Cat(ExpandPrefix(prefix), payload)) == 0
 }
 
 /**
  * Create a checksum.
  */
 func CreateChecksum(prefix string, payload data) data {
-	enc := Cat(ExpandPrefix(prefix), payload);
+	enc := Cat(ExpandPrefix(prefix), payload)
 	// Append 8 zeroes.
-	enc = Cat(enc, data{0,0,0,0,0,0,0,0})
+	enc = Cat(enc, data{0, 0, 0, 0, 0, 0, 0, 0})
 	// Determine what to XOR into those 8 zeroes.
-	mod := PolyMod(enc);
+	mod := PolyMod(enc)
 	ret := make(data, 8)
 	for i := 0; i < 8; i++ {
 		// Convert the 5-bit groups in mod to checksum values.
-		ret[i] = byte((mod >> uint(5 * (7 - i))) & 0x1f)
+		ret[i] = byte((mod >> uint(5*(7-i))) & 0x1f)
 	}
-	return ret;
+	return ret
 }
-
-
 
 /**
  * Encode a cashaddr string.
  */
 func Encode(prefix string, payload data) string {
-	checksum := CreateChecksum(prefix, payload);
-	combined := Cat(payload, checksum);
+	checksum := CreateChecksum(prefix, payload)
+	combined := Cat(payload, checksum)
 	ret := prefix + ":"
 
 	for _, c := range combined {
@@ -259,31 +257,31 @@ func DecodeCashAddress(str string) (string, data, error) {
 	// Go over the string and do some sanity checks.
 	lower, upper := false, false
 	prefixSize := 0
-	for  i := 0; i < len(str); i++ {
+	for i := 0; i < len(str); i++ {
 		c := byte(str[i])
-		if (c >= 'a' && c <= 'z') {
+		if c >= 'a' && c <= 'z' {
 			lower = true
 			continue
 		}
 
-		if (c >= 'A' && c <= 'Z') {
+		if c >= 'A' && c <= 'Z' {
 			upper = true
 			continue
 		}
 
-		if (c >= '0' && c <= '9') {
+		if c >= '0' && c <= '9' {
 			// We cannot have numbers in the prefix.
-			if (prefixSize == 0) {
+			if prefixSize == 0 {
 				return "", data{}, errors.New("Addresses cannot have numbers in the prefix")
 			}
 
 			continue
 		}
 
-		if (c == ':') {
+		if c == ':' {
 			// The separator must not be the first character, and there must not
 			// be 2 separators.
-			if (i == 0 || prefixSize != 0) {
+			if i == 0 || prefixSize != 0 {
 				return "", data{}, errors.New("The separator must not be the first character")
 			}
 
@@ -297,11 +295,11 @@ func DecodeCashAddress(str string) (string, data, error) {
 
 	// We must have a prefix and a data part and we can't have both uppercase
 	// and lowercase.
-	if (prefixSize == 0) {
+	if prefixSize == 0 {
 		return "", data{}, errors.New("Address must have a prefix")
 	}
 
-	if (upper && lower) {
+	if upper && lower {
 		return "", data{}, errors.New("Addresses cannot use both upper and lower case characters")
 	}
 
@@ -315,9 +313,9 @@ func DecodeCashAddress(str string) (string, data, error) {
 	valuesSize := len(str) - 1 - prefixSize
 	values := make(data, valuesSize)
 	for i := 0; i < valuesSize; i++ {
-		c := byte(str[i + prefixSize + 1])
+		c := byte(str[i+prefixSize+1])
 		// We have an invalid char in there.
-		if (c > 127 || CHARSET_REV[c] == -1) {
+		if c > 127 || CHARSET_REV[c] == -1 {
 			return "", data{}, errors.New("Invalid character")
 		}
 
@@ -325,7 +323,7 @@ func DecodeCashAddress(str string) (string, data, error) {
 	}
 
 	// Verify the checksum.
-	if (!VerifyChecksum(prefix, values)) {
+	if !VerifyChecksum(prefix, values) {
 		return "", data{}, ErrChecksumMismatch
 	}
 
@@ -341,7 +339,6 @@ func CheckEncodeCashAddress(input []byte, prefix string, t AddressType) string {
 	return Encode(prefix, k)
 }
 
-
 // CheckDecode decodes a string that was encoded with CheckEncode and verifies the checksum.
 func CheckDecodeCashAddress(input string) (result []byte, prefix string, t AddressType, err error) {
 	prefix, data, err := DecodeCashAddress(input)
@@ -355,7 +352,7 @@ func CheckDecodeCashAddress(input string) (result []byte, prefix string, t Addre
 	if len(data) != 21 {
 		return data, prefix, P2PKH, errors.New("Incorrect data length")
 	}
-	switch(data[0]){
+	switch data[0] {
 	case 0x00:
 		t = P2PKH
 	case 0x08:
@@ -387,7 +384,7 @@ func DecodeAddress(addr string, defaultNet *chaincfg.Params) (btcutil.Address, e
 	}
 
 	// Add prefix if it does not exist
-	if ! strings.Contains(addr, ":") {
+	if !strings.Contains(addr, ":") {
 		addr = pre + ":" + addr
 	}
 
@@ -401,7 +398,7 @@ func DecodeAddress(addr string, defaultNet *chaincfg.Params) (btcutil.Address, e
 	}
 	switch len(decoded) {
 	case ripemd160.Size: // P2PKH or P2SH
-		switch(typ){
+		switch typ {
 		case P2PKH:
 			return newCashAddressPubKeyHash(decoded, defaultNet)
 		case P2SH:
@@ -418,7 +415,7 @@ func DecodeAddress(addr string, defaultNet *chaincfg.Params) (btcutil.Address, e
 // AddressPubKeyHash is an Address for a pay-to-pubkey-hash (P2PKH)
 // transaction.
 type CashAddressPubKeyHash struct {
-	hash  [ripemd160.Size]byte
+	hash   [ripemd160.Size]byte
 	prefix string
 }
 
@@ -488,7 +485,7 @@ func (a *CashAddressPubKeyHash) Hash160() *[ripemd160.Size]byte {
 // AddressScriptHash is an Address for a pay-to-script-hash (P2SH)
 // transaction.
 type CashAddressScriptHash struct {
-	hash  [ripemd160.Size]byte
+	hash   [ripemd160.Size]byte
 	prefix string
 }
 
@@ -620,11 +617,10 @@ func ExtractPkScriptAddrs(pkScript []byte, chainParams *chaincfg.Params) (btcuti
 // Copyright (c) 2017 Takatoshi Nakagawa
 // MIT License
 
-
 func convertBits(data data, fromBits uint, tobits uint, pad bool) (data, error) {
 	// General power-of-2 base conversion.
 	var uintArr []uint
-	for _,i := range data {
+	for _, i := range data {
 		uintArr = append(uintArr, uint(i))
 	}
 	acc := uint(0)

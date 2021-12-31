@@ -1,9 +1,9 @@
 package bchutil
 
 import (
-	"github.com/btcsuite/btcd/txscript"
-	"github.com/btcsuite/btcutil"
 	"errors"
+	"github.com/jchavannes/btcd/txscript"
+	"github.com/jchavannes/btcutil"
 )
 
 func PayToAddrScript(addr btcutil.Address) ([]byte, error) {

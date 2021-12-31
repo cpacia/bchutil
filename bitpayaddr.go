@@ -7,11 +7,11 @@ package bchutil
 import (
 	"errors"
 
-	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/btcsuite/btcutil/base58"
-	"golang.org/x/crypto/ripemd160"
-	"github.com/btcsuite/btcutil"
 	"fmt"
+	"github.com/jchavannes/btcd/chaincfg"
+	"github.com/jchavannes/btcutil"
+	"github.com/jchavannes/btcutil/base58"
+	"golang.org/x/crypto/ripemd160"
 )
 
 var (
