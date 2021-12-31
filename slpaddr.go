@@ -3,8 +3,8 @@ package bchutil
 import (
 	"errors"
 	"fmt"
-	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/btcsuite/btcutil"
+	"github.com/jchavannes/btcd/chaincfg"
+	"github.com/jchavannes/btcutil"
 	"golang.org/x/crypto/ripemd160"
 )
 

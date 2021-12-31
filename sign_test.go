@@ -1,14 +1,14 @@
 package bchutil
 
 import (
-	"testing"
-	"github.com/btcsuite/btcd/wire"
 	"bytes"
-	"github.com/btcsuite/btcd/txscript"
 	"encoding/hex"
-	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/btcsuite/btcd/btcec"
-	"github.com/btcsuite/btcutil"
+	"github.com/jchavannes/btcd/btcec"
+	"github.com/jchavannes/btcd/chaincfg"
+	"github.com/jchavannes/btcd/txscript"
+	"github.com/jchavannes/btcd/wire"
+	"github.com/jchavannes/btcutil"
+	"testing"
 )
 
 type SigHashVector struct {
@@ -67,7 +67,7 @@ func TestCalulateSigHash(t *testing.T) {
 		}
 		r := bytes.NewReader(raw)
 		msgTx := wire.NewMsgTx(1)
-		msgTx.BtcDecode(r, 1, wire.BaseEncoding)
+		msgTx.BtcDecode(r, 1)
 		for idx, _ := range msgTx.TxIn {
 			pubKeyBytes, err := hex.DecodeString(v.Inputs[idx].Pubkey)
 			if err != nil {

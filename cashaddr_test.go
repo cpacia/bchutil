@@ -2,8 +2,8 @@ package bchutil
 
 import (
 	"testing"
-	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/btcsuite/btcutil"
+	"github.com/jchavannes/btcd/chaincfg"
+	"github.com/jchavannes/btcutil"
 )
 
 var TestVectorsP2PKH = [][]string {
