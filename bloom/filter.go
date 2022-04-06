@@ -27,6 +27,15 @@ func minUint32(a, b uint32) uint32 {
 	return b
 }
 
+// minUint64 is a convenience function to return the minimum value of the two
+// passed uint64 values.
+func minUint64(a, b uint64) uint64 {
+	if a < b {
+		return a
+	}
+	return b
+}
+
 // Filter defines a bitcoin bloom filter that provides easy manipulation of raw
 // filter data.
 type Filter struct {
@@ -57,8 +66,8 @@ func NewFilter(elements, tweak uint32, fprate float64, flags wire.BloomUpdateTyp
 	//
 	// Equivalent to m = -(n*ln(p) / ln(2)^2), where m is in bits.
 	// Then clamp it to the maximum filter size and convert to bytes.
-	dataLen := uint32(-1 * float64(elements) * math.Log(fprate) / ln2Squared)
-	dataLen = minUint32(dataLen, wire.MaxFilterLoadFilterSize*8) / 8
+	dataLen := uint64(-1 * float64(elements) * math.Log(fprate) / ln2Squared)
+	dataLen = minUint64(dataLen, wire.MaxFilterLoadFilterSize*8) / 8
 
 	// Calculate the number of hash functions based on the size of the
 	// filter calculated above and the number of elements.
